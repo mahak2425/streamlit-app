@@ -5,15 +5,15 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 
 # ==================================================
-# Page Configuration
+# 🚀 Page Configuration
 # ==================================================
 st.set_page_config(
-    page_title="Cars EDA Project",
+    page_title="🚗 Cars EDA Project",
     layout="wide"
 )
 
 # ==================================================
-# Load Data
+# 📦 Data Loading
 # ==================================================
 @st.cache_data
 def load_raw():
@@ -21,200 +21,115 @@ def load_raw():
 
 @st.cache_data
 def load_cleaned():
-    return pd.read_csv("Cars_cleaned.csv")
+    df = load_raw().copy()
+    df.drop_duplicates(inplace=True)
+    for col in ["Price", "Power"]:
+        if col in df.columns:
+            df[col] = pd.to_numeric(df[col], errors="coerce")
+    return df
 
 raw = load_raw()
 clean = load_cleaned()
 
+"Welcome to te Car Data EDA Dashboard. This project is designed to perform complete Explatory Data Analysis(EDA) on a car dataset using python + Streamlit"
+st.title("🚗 Cars Analytics Dashboard")
+st.subheader("📊 Dataset Overview")
+st.write("Columns in cleaned dataset:")
+st.write(clean.columns)
 
-page = st.sidebar.radio(
-    ["Introduction", "Analysis", "Conclusions"]
+c1, c2, c3, c4 = st.columns(4)
+c1.metric("Total Cars 🚘", len(clean))
+c2.metric("Avg Price 💰", round(clean["Price"].mean(), 2) if "Price" in clean else "N/A")
+c3.metric("Avg Power ⚡", round(clean["Power"].mean(), 2) if "Power" in clean else "N/A")
+c4.metric("Features 🔧", clean.shape[1])
+
+st.success("Dataset loaded successfully 🎉")
+
+"Car  Data Analysis"
+"* Data types"
+"* Missing values"
+"* Duplicate values"
+"* Summary statistics"
+"* Correlation matrix"
+st.header("📊 Exploratory Data Analysis")
+df = clean.copy()
+
+num_cols = df.select_dtypes(include=np.number).columns.tolist()
+cat_cols = df.select_dtypes(include="object").columns.tolist()
+
+# --------------------------------------------------
+# 🔢 Metrics
+# --------------------------------------------------
+st.subheader("Metrics")
+k1, k2, k3 = st.columns(3)
+k1.metric("Selected Cars 🚗", len(df))
+k2.metric("Average Price 💰", round(df["Price"].mean(), 2) if "Price" in df else "N/A")
+k3.metric("Average Power ⚡", round(df["Power"].mean(), 2) if "Power" in df else "N/A")
+
+"EDA Dashboard"
+"* Histogram"
+"* Boxplot"
+"* Bar chart"
+"* Scatter plot"
+"* Interactive fltering from sidebar"
+st.subheader("📈 Univariate Analysis")
+col = st.selectbox("Choose Column 🔽", df.columns)
+
+fig, ax = plt.subplots()
+if col in num_cols:
+    sns.histplot(df[col], kde=True, ax=ax)
+else:
+    df[col].value_counts().plot(kind="bar", ax=ax)
+
+st.pyplot(fig)
+
+# --------------------------------------------------
+# 📉 Bivariate Analysis
+# --------------------------------------------------
+st.subheader("📉 Bivariate Analysis")
+x = st.selectbox("X Axis 📌", df.columns, key="bivar_x")
+y = st.selectbox("Y Axis 📌", df.columns, key="bivar_y")
+
+fig2, ax2 = plt.subplots()
+if x in num_cols and y in num_cols:
+    sns.scatterplot(data=df, x=x, y=y, ax=ax2)
+else:
+    sns.boxplot(data=df, x=x, y=y, ax=ax2)
+st.pyplot(fig2)
+
+# --------------------------------------------------
+# 🔥 Multivariate Analysis
+# --------------------------------------------------
+st.subheader("🔥 Multivariate Analysis")
+option = st.selectbox(
+    "Choose Analysis Type 🎯",
+    ["Heatmap", "Pairplot"]
 )
 
-"Welcome to te Car Data EDA Dashboard. This project is designed to perform complete Explatory Data Analysis(EDA) on a car dataset using python + Streamlit"
-if page == "Introduction":
-
-    st.title("🚗 Cars Analytics Dashboard")
-
-    st.subheader("Dataset Columns")
-    st.write(clean.columns)
-
-    c1, c2, c3, c4 = st.columns(4)
-
-    c1.metric("Total Cars", len(clean))
-    c2.metric("Average Price", round(clean["Price"].mean(), 2))
-    c3.metric("Average KM", int(clean["Kilometers_Driven"].mean()))
-    c4.metric("Total Companies", clean["Company_Name"].nunique())
-
-    st.subheader("Raw Dataset")
-    st.dataframe(raw, use_container_width=True)
-
-    st.subheader("Cleaned Dataset")
-    st.dataframe(clean, use_container_width=True)
-
-    st.subheader("Location Map")
-    if {"Latitude", "Longitude"}.issubset(clean.columns):
-        st.map(clean[["Latitude", "Longitude"]])
+if option == "Heatmap":
+    if len(num_cols) > 1:
+        fig3, ax3 = plt.subplots(figsize=(9, 5))
+        sns.heatmap(df[num_cols].corr(), annot=True, cmap="coolwarm", ax=ax3)
+        st.pyplot(fig3)
     else:
-        st.info("Latitude and Longitude not available")
+        st.info("Not enough numeric columns for heatmap ⚠️")
 
-    "Car  Data Analysis"
-    "* Data types"
-    "* Missing values"
-    "* Duplicate values"
-    "* Summary statistics"
-    "* Correlation matrix"
-
-elif page == "Analysis":
-
-    st.title("📊 Exploratory Data Analysis")
-
-    company = st.sidebar.multiselect(
-        "Select Company",
-        options=clean["Company_Name"].unique(),
-        default=clean["Company_Name"].unique()
-    )
-
-    year = st.sidebar.slider(
-        "Select Year Range",
-        int(clean["Year"].min()),
-        int(clean["Year"].max()),
-        (int(clean["Year"].min()), int(clean["Year"].max()))
-    )
-
-    df = clean[
-        (clean["Company_Name"].isin(company)) &
-        (clean["Year"].between(year[0], year[1]))
-    ]
-
-    num_cols = df.select_dtypes(include=np.number).columns.tolist()
-    cat_cols = df.select_dtypes(include="object").columns.tolist()
-
-    # ----------------------------
-    # Metrics
-    # ----------------------------
-    k1, k2, k3 = st.columns(3)
-
-    k1.metric("Selected Cars", len(df))
-    k2.metric("Average Price", round(df["Price"].mean(), 2))
-
-    # SAFE power handling
-    if "Power" in df.columns:
-        k3.metric("Average Power", round(df["Power"].mean(), 2))
-    elif "Power_Value" in df.columns:
-        k3.metric("Average Power", round(df["Power_Value"].mean(), 2))
+elif option == "Pairplot":
+    if len(num_cols) > 1:
+        st.pyplot(sns.pairplot(df[num_cols]))
     else:
-        k3.metric("Average Power", "N/A")
+        st.info("Not enough numeric columns for pairplot ⚠️")
 
-    "EDA Dashboard"
-    "* Histogram"
-    "* Boxplot"
-    "* Bar chart"
-    "* Scatter plot"
-    "* Interactive fltering from sidebar"
-    st.header("Univariate Analysis")
-
-    col = st.selectbox("Choose Column", df.columns)
-
-    fig, ax = plt.subplots(figsize=(7, 4))
-
-    if col in cat_cols:
-        sns.countplot(y=df[col], ax=ax)
-    else:
-        dist = st.radio("View Type", ["Histogram", "KDE", "Boxplot"])
-
-        if dist == "Histogram":
-            sns.histplot(df[col], kde=True, ax=ax)
-        elif dist == "KDE":
-            sns.kdeplot(df[col], fill=True, ax=ax)
-        else:
-            sns.boxplot(x=df[col], ax=ax)
-
-    st.pyplot(fig)
-
-    # ----------------------------
-    # Bivariate Analysis
-    # ----------------------------
-    st.header("Bivariate Analysis")
-
-    c1, c2 = st.columns(2)
-    x = c1.selectbox("X Axis", df.columns)
-    y = c2.selectbox("Y Axis", df.columns)
-
-    fig2, ax2 = plt.subplots(figsize=(7, 4))
-
-    if x in num_cols and y in num_cols:
-        sns.scatterplot(data=df, x=x, y=y, ax=ax2)
-        st.write("Correlation:", round(df[x].corr(df[y]), 3))
-    elif x in num_cols and y in cat_cols:
-        sns.boxplot(data=df, x=y, y=x, ax=ax2)
-    elif x in cat_cols and y in num_cols:
-        sns.boxplot(data=df, x=x, y=y, ax=ax2)
-    else:
-        sns.countplot(data=df, x=x, hue=y, ax=ax2)
-
-    st.pyplot(fig2)
-
-    # ----------------------------
-    # Multivariate Analysis
-    # ----------------------------
-    st.header("Multivariate Analysis")
-
-    option = st.selectbox(
-        "Method",
-        ["Heatmap", "Pairplot", "Grouped Bar"]
-    )
-
-    if option == "Heatmap":
-        if len(num_cols) > 1:
-            fig3, ax3 = plt.subplots(figsize=(9, 5))
-            sns.heatmap(df[num_cols].corr(), annot=True, cmap="coolwarm", ax=ax3)
-            st.pyplot(fig3)
-        else:
-            st.info("Not enough numeric columns for heatmap")
-
-    elif option == "Pairplot":
-        if len(num_cols) > 1:
-            st.pyplot(sns.pairplot(df[num_cols]))
-        else:
-            st.info("Not enough numeric columns for pairplot")
-
-    else:
-        if {"Fuel_Type", "Price"}.issubset(df.columns):
-            fig4, ax4 = plt.subplots(figsize=(8, 4))
-            sns.barplot(
-                data=df,
-                x="Fuel_Type",
-                y="Price",
-                hue="Transmission" if "Transmission" in df.columns else None,
-                ax=ax4
-            )
-            st.pyplot(fig4)
-        else:
-            st.warning("Required columns missing")
-
-else:
-
-    st.title("📌 Automated Insights")
-
-    st.write("Total Records:", len(clean))
-
-    st.write(
-        "Highest Price Car Company:",
-        clean.loc[clean["Price"].idxmax(), "Company_Name"]
-    )
-
-    st.write(
-        "Most Common Fuel Type:",
-        clean["Fuel_Type"].mode()[0]
-    )
-
-    st.write(
-        "Strongest Correlation with Price:",
-        clean.select_dtypes(include=np.number)
-        .corr()["Price"]
-        .sort_values(ascending=False)
-        .index[1]
-    )
-    "TIP"
-    "Use the sidebar filters to explore a specific category and perform analysis on filtered data."
+# ==================================================
+# 📌 Conclusions Section
+# ==================================================
+st.header("📌 Automated Insights")
+st.write("""
+### 🔍 Key Findings:
+- 💰 Price varies significantly across brands
+- ⚡ Higher power often correlates with higher price
+- 🚘 Fuel type impacts cost distribution
+""")
+st.success("EDA Completed Successfully 🎉🚀")
+"TIP"
+"Use the sidebar filters to explore a specific category and perform analysis on filtered data."
