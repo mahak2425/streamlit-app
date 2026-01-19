@@ -26,17 +26,12 @@ def load_cleaned():
 raw = load_raw()
 clean = load_cleaned()
 
-# ==================================================
-# Sidebar Navigation
-# ==================================================
+
 page = st.sidebar.radio(
-    "Navigation",
     ["Introduction", "Analysis", "Conclusions"]
 )
 
-# ==================================================
-# Introduction Page
-# ==================================================
+"Welcome to te Car Data EDA Dashboard. This project is designed to perform complete Explatory Data Analysis(EDA) on a car dataset using python + Streamlit"
 if page == "Introduction":
 
     st.title("🚗 Cars Analytics Dashboard")
@@ -63,9 +58,13 @@ if page == "Introduction":
     else:
         st.info("Latitude and Longitude not available")
 
-# ==================================================
-# Analysis Page
-# ==================================================
+    "Car  Data Analysis"
+    "* Data types"
+    "* Missing values"
+    "* Duplicate values"
+    "* Summary statistics"
+    "* Correlation matrix"
+
 elif page == "Analysis":
 
     st.title("📊 Exploratory Data Analysis")
@@ -107,9 +106,12 @@ elif page == "Analysis":
     else:
         k3.metric("Average Power", "N/A")
 
-    # ----------------------------
-    # Univariate Analysis
-    # ----------------------------
+    "EDA Dashboard"
+    "* Histogram"
+    "* Boxplot"
+    "* Bar chart"
+    "* Scatter plot"
+    "* Interactive fltering from sidebar"
     st.header("Univariate Analysis")
 
     col = st.selectbox("Choose Column", df.columns)
@@ -191,9 +193,6 @@ elif page == "Analysis":
         else:
             st.warning("Required columns missing")
 
-# ==================================================
-# Conclusions Page
-# ==================================================
 else:
 
     st.title("📌 Automated Insights")
@@ -217,3 +216,5 @@ else:
         .sort_values(ascending=False)
         .index[1]
     )
+    "TIP"
+    "Use the sidebar filters to explore a specific category and perform analysis on filtered data."
