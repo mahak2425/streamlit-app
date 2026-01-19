@@ -4,17 +4,17 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-# ===============================
+# ==================================================
 # Page Configuration
-# ===============================
+# ==================================================
 st.set_page_config(
     page_title="Cars EDA Project",
     layout="wide"
 )
 
-# ===============================
-# Data Loading
-# ===============================
+# ==================================================
+# Load Data
+# ==================================================
 @st.cache_data
 def load_raw():
     return pd.read_csv("Cars.csv")
@@ -26,23 +26,22 @@ def load_cleaned():
 raw = load_raw()
 clean = load_cleaned()
 
-# ===============================
+# ==================================================
 # Sidebar Navigation
-# ===============================
+# ==================================================
 page = st.sidebar.radio(
     "Navigation",
     ["Introduction", "Analysis", "Conclusions"]
 )
 
-# ===============================
+# ==================================================
 # Introduction Page
-# ===============================
+# ==================================================
 if page == "Introduction":
 
     st.title("🚗 Cars Analytics Dashboard")
 
-    st.subheader("Dataset Overview")
-    st.write("Columns in cleaned dataset:")
+    st.subheader("Dataset Columns")
     st.write(clean.columns)
 
     c1, c2, c3, c4 = st.columns(4)
@@ -64,9 +63,9 @@ if page == "Introduction":
     else:
         st.info("Latitude and Longitude not available")
 
-# ===============================
+# ==================================================
 # Analysis Page
-# ===============================
+# ==================================================
 elif page == "Analysis":
 
     st.title("📊 Exploratory Data Analysis")
@@ -92,15 +91,25 @@ elif page == "Analysis":
     num_cols = df.select_dtypes(include=np.number).columns.tolist()
     cat_cols = df.select_dtypes(include="object").columns.tolist()
 
+    # ----------------------------
+    # Metrics
+    # ----------------------------
     k1, k2, k3 = st.columns(3)
 
     k1.metric("Selected Cars", len(df))
     k2.metric("Average Price", round(df["Price"].mean(), 2))
-    k3.metric("Average Power", round(df["Power"].mean(), 2))
 
-    # ---------------------------
+    # SAFE power handling
+    if "Power" in df.columns:
+        k3.metric("Average Power", round(df["Power"].mean(), 2))
+    elif "Power_Value" in df.columns:
+        k3.metric("Average Power", round(df["Power_Value"].mean(), 2))
+    else:
+        k3.metric("Average Power", "N/A")
+
+    # ----------------------------
     # Univariate Analysis
-    # ---------------------------
+    # ----------------------------
     st.header("Univariate Analysis")
 
     col = st.selectbox("Choose Column", df.columns)
@@ -121,13 +130,12 @@ elif page == "Analysis":
 
     st.pyplot(fig)
 
-    # ---------------------------
+    # ----------------------------
     # Bivariate Analysis
-    # ---------------------------
+    # ----------------------------
     st.header("Bivariate Analysis")
 
     c1, c2 = st.columns(2)
-
     x = c1.selectbox("X Axis", df.columns)
     y = c2.selectbox("Y Axis", df.columns)
 
@@ -145,9 +153,9 @@ elif page == "Analysis":
 
     st.pyplot(fig2)
 
-    # ---------------------------
+    # ----------------------------
     # Multivariate Analysis
-    # ---------------------------
+    # ----------------------------
     st.header("Multivariate Analysis")
 
     option = st.selectbox(
@@ -156,12 +164,18 @@ elif page == "Analysis":
     )
 
     if option == "Heatmap":
-        fig3, ax3 = plt.subplots(figsize=(9, 5))
-        sns.heatmap(df[num_cols].corr(), annot=True, cmap="coolwarm", ax=ax3)
-        st.pyplot(fig3)
+        if len(num_cols) > 1:
+            fig3, ax3 = plt.subplots(figsize=(9, 5))
+            sns.heatmap(df[num_cols].corr(), annot=True, cmap="coolwarm", ax=ax3)
+            st.pyplot(fig3)
+        else:
+            st.info("Not enough numeric columns for heatmap")
 
     elif option == "Pairplot":
-        st.pyplot(sns.pairplot(df[num_cols]))
+        if len(num_cols) > 1:
+            st.pyplot(sns.pairplot(df[num_cols]))
+        else:
+            st.info("Not enough numeric columns for pairplot")
 
     else:
         if {"Fuel_Type", "Price"}.issubset(df.columns):
@@ -177,9 +191,9 @@ elif page == "Analysis":
         else:
             st.warning("Required columns missing")
 
-# ===============================
+# ==================================================
 # Conclusions Page
-# ===============================
+# ==================================================
 else:
 
     st.title("📌 Automated Insights")
